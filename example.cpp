@@ -6,12 +6,25 @@
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/CommandLine.h"
+#include <clang/Basic/SourceManager.h>
+#include <clang/Rewrite/Core/Rewriter.h>
 
 using namespace clang;
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace llvm;
 
+static llvm::cl::OptionCategory MyToolCategory("my-tool options");
+static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
+static cl::extrahelp MoreHelp("\nMore help text...\n");
+static cl::opt<std::string> funcname("funcname", cl::desc("Specify the function name to analyze."), cl::value_desc("funcname"));
+// static cl::opt<std::string> instrument("instrument", cl::desc("If set, instrument <input string> at each loop line number minus 1."), cl::value_desc("string"));
+
+// void InsertCodeAtLine(clang::SourceManager &SM, clang::Rewriter &R, unsigned LineNo, const std::string &Code) {
+//     clang::FileID MainFile = SM.getMainFileID();
+//     clang::SourceLocation Loc = SM.translateLineCol(MainFile, LineNo, 1);
+//     R.InsertText(Loc, Code, true);
+// }
 
 class CFGPrinter : public MatchFinder::MatchCallback
 {
@@ -23,6 +36,9 @@ public:
     {
       ASTContext *context = Result.Context;
       SourceManager &sm = context->getSourceManager();
+      // clang::Rewriter TheRewriter;
+      // TheRewriter.setSourceMgr(sm, context->getLangOpts());
+
       Stmt *funcBody = funcDecl->getBody();
       static std::unique_ptr<CFG> sourceCFG = CFG::buildCFG(
           funcDecl, funcBody, context, clang::CFG::BuildOptions());
@@ -34,25 +50,23 @@ public:
         const Stmt *stmt = block->getLoopTarget();
         if (stmt)
         {
-          fprintf(stderr, "Loop entry point: %d, size %d\nat line number:", block->getBlockID(), block->size());
           SourceLocation sloc = stmt->getBeginLoc();
           unsigned int lino = sm.getSpellingLineNumber(sloc);
-          printf("%d\n", lino);
-          
+          fprintf(stderr, "Loop entry point (BB id): %d, at line number: %d\n", block->getBlockID(), lino);
+          // if (!instrument.empty()) {
+            // InsertCodeAtLine(sm, TheRewriter, lino, "check");
+          // }
         }
       }
 
       auto langOpt = context->getLangOpts();
       sourceCFG->dump(langOpt, true);
+      // if (!instrument.empty()) {
+        // TheRewriter.getEditBuffer(sm.getMainFileID()).write(llvm::outs());
+      // }
     }
   }
 };
-
-static llvm::cl::OptionCategory MyToolCategory("my-tool options");
-static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
-static cl::extrahelp MoreHelp("\nMore help text...\n");
-
-static cl::opt<std::string> funcname("funcname", cl::desc("Specify the function name to analyze"), cl::value_desc("funcname"));
 
 int main(int argc, const char **argv)
 {
@@ -68,11 +82,6 @@ int main(int argc, const char **argv)
   if (!funcname.empty()){
     FunctionMatcher = functionDecl(hasName(funcname)).bind("targetFunc");
   }
-  
-  // find all functions inside the main
-
-
   Finder.addMatcher(FunctionMatcher, &Printer);
-
   return Tool.run(newFrontendActionFactory(&Finder).get());
 }
