@@ -18,13 +18,13 @@ static llvm::cl::OptionCategory MyToolCategory("my-tool options");
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 static cl::extrahelp MoreHelp("\nMore help text...\n");
 static cl::opt<std::string> funcname("funcname", cl::desc("Specify the function name to analyze."), cl::value_desc("funcname"));
-// static cl::opt<std::string> instrument("instrument", cl::desc("If set, instrument <input string> at each loop line number minus 1."), cl::value_desc("string"));
+static cl::opt<std::string> instrument("instrument", cl::desc("If set, instrument <input string> at each loop line number minus 1."), cl::value_desc("string"));
 
-// void InsertCodeAtLine(clang::SourceManager &SM, clang::Rewriter &R, unsigned LineNo, const std::string &Code) {
-//     clang::FileID MainFile = SM.getMainFileID();
-//     clang::SourceLocation Loc = SM.translateLineCol(MainFile, LineNo, 1);
-//     R.InsertText(Loc, Code, true);
-// }
+void InsertCodeAtLine(clang::SourceManager &SM, clang::Rewriter &R, unsigned LineNo, const std::string &Code) {
+    clang::FileID MainFile = SM.getMainFileID();
+    clang::SourceLocation Loc = SM.translateLineCol(MainFile, LineNo, 1);
+    R.InsertText(Loc, Code, true);
+}
 
 class CFGPrinter : public MatchFinder::MatchCallback
 {
@@ -36,8 +36,8 @@ public:
     {
       ASTContext *context = Result.Context;
       SourceManager &sm = context->getSourceManager();
-      // clang::Rewriter TheRewriter;
-      // TheRewriter.setSourceMgr(sm, context->getLangOpts());
+      clang::Rewriter TheRewriter;
+      TheRewriter.setSourceMgr(sm, context->getLangOpts());
 
       Stmt *funcBody = funcDecl->getBody();
       static std::unique_ptr<CFG> sourceCFG = CFG::buildCFG(
@@ -52,18 +52,20 @@ public:
         {
           SourceLocation sloc = stmt->getBeginLoc();
           unsigned int lino = sm.getSpellingLineNumber(sloc);
+          unsigned int cno = sm.getSpellingColumnNumber(sloc);
           fprintf(stderr, "Loop entry point (BB id): %d, at line number: %d\n", block->getBlockID(), lino);
-          // if (!instrument.empty()) {
-            // InsertCodeAtLine(sm, TheRewriter, lino, "check");
-          // }
+          if (!instrument.empty()) {
+            SourceLocation loc = sm.translateLineCol(sm.getMainFileID(), lino, cno);
+            TheRewriter.InsertText(loc, instrument + "\n", true, true);
+          }
         }
       }
 
       auto langOpt = context->getLangOpts();
       sourceCFG->dump(langOpt, true);
-      // if (!instrument.empty()) {
-        // TheRewriter.getEditBuffer(sm.getMainFileID()).write(llvm::outs());
-      // }
+      if (!instrument.empty()) {
+        TheRewriter.getEditBuffer(sm.getMainFileID()).write(llvm::outs());
+      }
     }
   }
 };
