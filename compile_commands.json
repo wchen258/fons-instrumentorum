@@ -1,0 +1,26 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-c",
+      "-o",
+      "test_func_loop",
+      "test_func_loop.c"
+    ],
+    "directory": "/home/weifan/mcu_tpa",
+    "file": "/home/weifan/mcu_tpa/test_func_loop.c",
+    "output": "/home/weifan/mcu_tpa/test_func_loop"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-c",
+      "-o",
+      "test_bare_loops",
+      "test_bare_loops.c"
+    ],
+    "directory": "/home/weifan/mcu_tpa",
+    "file": "/home/weifan/mcu_tpa/test_bare_loops.c",
+    "output": "/home/weifan/mcu_tpa/test_bare_loops"
+  }
+]
