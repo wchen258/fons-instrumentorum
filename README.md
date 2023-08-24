@@ -17,7 +17,7 @@ This would print the transformed code to `stdout`. Thus run `./example test_func
 Likely the missing library is in the `LLVM_BUILD_PATH/lib`. Thus run `export LD_LIBRARY_PATH=LLVM_BUILD_PATH/lib`
 ### code runs, but complain no compilation database
 If you remove the `compile_commands.json` or analyze other source code, it would complain. I suggest read [this](https://eli.thegreenplace.net/2014/05/21/compilation-databases-for-clang-based-tools/).
-Since this repo use `makefile`, by `bear make`, the corresponding compilation database can be generated. 
+Since this repo use `makefile`, by `bear -- make aut`, the corresponding compilation database can be generated. 
 ### llvm build failed
 As for myself, after using a newer version of `cmake` solved the problem. 
 ### undefined reference to xxx.h
