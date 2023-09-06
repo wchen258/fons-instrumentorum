@@ -5,12 +5,12 @@ Using LLVM to achieve some basic source code manipulation. Trying to detail the 
 As indicated by the `makefile`, the directory of this repo should be at the same level as the `llvm-project`. The latter is the [official release](https://llvm.org/docs/GettingStarted.html) of `llvm`. Resolve the path if necessary. 
 
 ## Run demo
-After `make`, run `./example test_bare_loop.c`. This would print the information regarding the `main` in the source file, including basicblock info, loop entry point, and associated line number, to the `stderr`. 
+After `make`, run `./example AUT/test_bare_loop.c`. This would print the information regarding the `main` in the source file, including basicblock info, loop entry point, and associated line number, to the `stderr`. 
 ### Analyze other functions
 `./example AUT/test_func_loop.c -funcname add`
 ### Code instrumentation at the loop entry
 `./example AUT/test_func_loop.c -funcname main -instrument 'CHECK()'`
-This would print the transformed code to `stdout`. Thus run `./example test_func_loop.c -funcname main -instrument 'CHECK()' > transformed.c` to save the resultant code. The resultant code would have `CHECK()` before each loop entry point. 
+This would print the transformed code to `stdout`. Thus run `./example AUT/test_func_loop.c -funcname main -instrument 'CHECK()' > transformed.c` to save the resultant code. The resultant code would have `CHECK()` before each loop entry point. 
 
 ## Common Error
 ### `make` success, but execution complain missing `XXX.so.XXX`
