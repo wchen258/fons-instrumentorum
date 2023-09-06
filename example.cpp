@@ -39,6 +39,9 @@ public:
       clang::Rewriter TheRewriter;
       TheRewriter.setSourceMgr(sm, context->getLangOpts());
 
+      if (funcDecl->isThisDeclarationADefinition()) return;
+
+
       Stmt *funcBody = funcDecl->getBody();
       static std::unique_ptr<CFG> sourceCFG = CFG::buildCFG(
           funcDecl, funcBody, context, clang::CFG::BuildOptions());
