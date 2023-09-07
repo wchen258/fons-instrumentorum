@@ -39,7 +39,14 @@ public:
       clang::Rewriter TheRewriter;
       TheRewriter.setSourceMgr(sm, context->getLangOpts());
 
-      if (funcDecl->isThisDeclarationADefinition()) return;
+      if (!funcDecl->isThisDeclarationADefinition()) {
+        // print the position of the function to stderr
+        SourceLocation sloc = funcDecl->getBeginLoc();
+        unsigned int lino = sm.getSpellingLineNumber(sloc);
+        unsigned int cno = sm.getSpellingColumnNumber(sloc);
+        fprintf(stderr, "Function %s is a declaration at (%u,%u).\n", funcDecl->getNameAsString().c_str(), lino, cno);
+        return;
+      } 
 
 
       Stmt *funcBody = funcDecl->getBody();
@@ -75,10 +82,15 @@ public:
 
 int main(int argc, const char **argv)
 {
-  Expected<CommonOptionsParser> options = CommonOptionsParser::create(argc, argv, MyToolCategory);
-  assert(static_cast<bool>(options));
-  ClangTool Tool(options->getCompilations(),
-                 options->getSourcePathList());
+  auto ExpectedParser = CommonOptionsParser::create(argc, argv, MyToolCategory);
+  if (!ExpectedParser) {
+    // Fail gracefully for unsupported options.
+    llvm::errs() << ExpectedParser.takeError();
+    return 1;
+  }
+  CommonOptionsParser& OptionsParser = ExpectedParser.get();
+  ClangTool Tool(OptionsParser.getCompilations(),
+                 OptionsParser.getSourcePathList());
 
   CFGPrinter Printer;
   MatchFinder Finder;
