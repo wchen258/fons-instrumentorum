@@ -15,16 +15,9 @@ using namespace clang::tooling;
 using namespace llvm;
 
 static llvm::cl::OptionCategory MyToolCategory("my-tool options");
-static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
-static cl::extrahelp MoreHelp("\nMore help text...\n");
-static cl::opt<std::string> funcname("funcname", cl::desc("Specify the function name to analyze."), cl::value_desc("funcname"));
-static cl::opt<std::string> instrument("instrument", cl::desc("If set, instrument <input string> at each loop line number minus 1."), cl::value_desc("string"));
+static cl::opt<std::string> funcname("funcname", cl::desc("Specify the function name to analyze."), cl::value_desc("function name"));
+static cl::opt<std::string> instrument("instrument", cl::desc("If set, instrument <expression> at each loop line number minus 1."), cl::value_desc("expression"));
 
-void InsertCodeAtLine(clang::SourceManager &SM, clang::Rewriter &R, unsigned LineNo, const std::string &Code) {
-    clang::FileID MainFile = SM.getMainFileID();
-    clang::SourceLocation Loc = SM.translateLineCol(MainFile, LineNo, 1);
-    R.InsertText(Loc, Code, true);
-}
 
 class CFGPrinter : public MatchFinder::MatchCallback
 {
@@ -82,6 +75,7 @@ public:
 
 int main(int argc, const char **argv)
 {
+  // cl::ParseCommandLineOptions(argc, argv);
   auto ExpectedParser = CommonOptionsParser::create(argc, argv, MyToolCategory);
   if (!ExpectedParser) {
     // Fail gracefully for unsupported options.
