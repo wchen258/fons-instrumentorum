@@ -17,7 +17,7 @@ using namespace llvm;
 static llvm::cl::OptionCategory MyToolCategory("my-tool options");
 static cl::opt<std::string> funcname("funcname", cl::desc("Specify the function name to analyze."), cl::value_desc("function name"));
 static cl::opt<std::string> instrument("instrument", cl::desc("If set, instrument <expression> at each loop line number minus 1."), cl::value_desc("expression"));
-
+static cl::opt<std::string> ofname("o", cl::desc("Specify the output file name."), cl::value_desc("filename"));
 
 class CFGPrinter : public MatchFinder::MatchCallback
 {
@@ -67,7 +67,14 @@ public:
       auto langOpt = context->getLangOpts();
       sourceCFG->dump(langOpt, true);
       if (!instrument.empty()) {
-        TheRewriter.getEditBuffer(sm.getMainFileID()).write(llvm::outs());
+        // write the editbuffer to [ofname], if specified
+        if (!ofname.empty()) {
+          std::error_code error_code;
+          llvm::raw_fd_ostream out(ofname, error_code);
+          TheRewriter.getEditBuffer(sm.getMainFileID()).write(out);
+        } else {
+          TheRewriter.getEditBuffer(sm.getMainFileID()).write(llvm::outs());
+        }
       }
     }
   }
